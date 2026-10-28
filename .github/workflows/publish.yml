@@ -1,0 +1,48 @@
+# Publica uma versão do Sci Life Spectrum.
+# O instalador chega em partes (< 100 MB cada, limite do Git) num branch upload/vX.Y.Z;
+# este workflow junta as partes, confere o SHA-512, cria a Release e apaga o branch.
+name: Publicar versão
+
+on:
+  push:
+    branches: ['upload/**']
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Juntar partes e conferir integridade
+        id: build
+        run: |
+          set -euo pipefail
+          cd incoming
+          VERSION="$(cat VERSION)"
+          EXE="SciLifeSpectrum-Setup-${VERSION}.exe"
+          cat parts/${EXE}.part-* > "${EXE}"
+          EXPECTED="$(grep -m1 '^sha512:' latest.yml | awk '{print $2}')"
+          ACTUAL="$(openssl dgst -sha512 -binary "${EXE}" | base64 -w0)"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then echo "SHA-512 não confere"; exit 1; fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "exe=${EXE}" >> "$GITHUB_OUTPUT"
+
+      - name: Criar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd incoming
+          V="${{ steps.build.outputs.version }}"
+          NOTES="Instalador do Sci Life Spectrum ${V} para Windows."
+          [ -f NOTES.md ] && NOTES="$(cat NOTES.md)"
+          gh release create "v${V}" \
+            "${{ steps.build.outputs.exe }}" "${{ steps.build.outputs.exe }}.blockmap" latest.yml \
+            --repo "${{ github.repository }}" --title "Sci Life Spectrum ${V}" --notes "${NOTES}" --latest
+
+      - name: Apagar branch de upload
+        if: always()
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
