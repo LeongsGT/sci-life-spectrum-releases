@@ -1,0 +1,25 @@
+# Marca uma release existente como versão estável e "Latest" (o app ignora pré-lançamentos).
+# Gatilho: push de um branch promote/vX.Y.Z — o branch é apagado no fim.
+name: Promover versão
+
+on:
+  push:
+    branches: ['promote/**']
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Marcar como estável
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME#promote/}"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --prerelease=false --draft=false --latest
+      - name: Apagar branch
+        if: always()
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
