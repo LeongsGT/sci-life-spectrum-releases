@@ -42,6 +42,8 @@ jobs:
           gh release create "v${V}" \
             "${{ steps.build.outputs.exe }}" "${{ steps.build.outputs.exe }}.blockmap" latest.yml \
             --repo "${{ github.repository }}" --title "Sci Life Spectrum ${V}" --notes "${NOTES}" --latest
+          # App Android (opcional): vai junto na mesma release
+          if [ -f SciLife-Android.apk ]; then gh release upload "v${V}" SciLife-Android.apk --repo "${{ github.repository }}" --clobber; fi
 
       - name: Apagar branch de upload
         if: always()
