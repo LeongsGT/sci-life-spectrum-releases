@@ -44,6 +44,12 @@ jobs:
             --repo "${{ github.repository }}" --title "Sci Life Spectrum ${V}" --notes "${NOTES}" --latest
           # App Android (opcional): vai junto na mesma release
           if [ -f SciLife-Android.apk ]; then gh release upload "v${V}" SciLife-Android.apk --repo "${{ github.repository }}" --clobber; fi
+          # Prévia do app nativo sem Electron (opcional): zip em partes em incoming/native/
+          if ls native/*.zip.part-* >/dev/null 2>&1; then
+            ZIP="$(ls native/*.zip.part-* | head -1 | sed 's/\.part-[0-9]*$//')"
+            cat "${ZIP}".part-* > "${ZIP}"
+            gh release upload "v${V}" "${ZIP}" --repo "${{ github.repository }}" --clobber
+          fi
 
       - name: Apagar branch de upload
         if: always()
