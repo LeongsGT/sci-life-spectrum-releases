@@ -46,6 +46,7 @@ jobs:
             ZIP="$(ls native/*.zip.part-* | sed -n '1s/\.part-[0-9]*$//p')"
             cat "${ZIP}".part-* > "${ZIP}"
             FILES+=("${ZIP}")
+            [ -f native/native.yml ] && FILES+=(native/native.yml)   # manifesto da atualização do app nativo
           fi
           # 1. Rascunho com os arquivos. Se uma tentativa anterior deixou rascunho, reaproveita (reenvia por cima).
           STATE="$(gh release view "v${V}" $R --json isDraft --jq .isDraft 2>/dev/null || echo none)"
