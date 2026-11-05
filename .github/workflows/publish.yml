@@ -87,7 +87,7 @@ jobs:
             fi
           done
           # 2. Publica (cria a tag). Erros 500 ao gravar refs acontecem: tenta algumas vezes.
-          KIND="--latest"
+          KIND="--prerelease=false --latest"
           [ -f PRERELEASE ] && KIND="--prerelease --latest=false"
           for i in 1 2 3 4 5 6 7 8; do
             gh release edit "v${V}" $R --draft=false $KIND --title "Sci Life Spectrum ${V}" --notes "${NOTES}" && break
