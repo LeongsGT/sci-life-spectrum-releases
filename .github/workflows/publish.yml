@@ -81,7 +81,8 @@ jobs:
             n="$(basename "$f")"
             ok="$(gh release view "v${V}" $R --json assets --jq ".assets[] | select(.name==\"$n\") | .size" 2>/dev/null || true)"
             # .yml sempre vai de novo: um manifesto novo pode ter o mesmo tamanho do antigo
-            if [ "$ok" != "$(stat -c %s "$f")" ] || [[ "$n" == *.yml ]]; then
+            # Versão que já existia (reenvio): troca tudo, mesmo arquivo com o mesmo tamanho
+            if [ "$STATE" != "none" ] || [ "$ok" != "$(stat -c %s "$f")" ] || [[ "$n" == *.yml ]]; then
               for i in 1 2 3; do gh release upload "v${V}" "$f" $R --clobber && break; sleep 15; done
             fi
           done
