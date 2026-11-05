@@ -39,6 +39,10 @@ jobs:
           V="${{ steps.build.outputs.version }}"
           NOTES="Instalador do Sci Life Spectrum ${V} para Windows."
           [ -f NOTES.md ] && NOTES="$(cat NOTES.md)"
+          # Uma tentativa anterior que falhou no meio deixa um rascunho com a mesma tag: apaga para recomeçar
+          if [ "$(gh release view "v${V}" --repo "${{ github.repository }}" --json isDraft --jq .isDraft 2>/dev/null || echo none)" = "true" ]; then
+            gh release delete "v${V}" --repo "${{ github.repository }}" --yes
+          fi
           gh release create "v${V}" \
             "${{ steps.build.outputs.exe }}" "${{ steps.build.outputs.exe }}.blockmap" latest.yml \
             --repo "${{ github.repository }}" --title "Sci Life Spectrum ${V}" --notes "${NOTES}" --latest
@@ -48,7 +52,7 @@ jobs:
           if ls native/*.zip.part-* >/dev/null 2>&1; then
             ZIP="$(ls native/*.zip.part-* | head -1 | sed 's/\.part-[0-9]*$//')"
             cat "${ZIP}".part-* > "${ZIP}"
-            gh release upload "v${V}" "${ZIP}" --repo "${{ github.repository }}" --clobber
+            gh release upload "v${V}" "${ZIP}" --repo "${{ github.repository }}" --clobber || echo "::warning::Prévia nativa não anexada"
           fi
 
       - name: Apagar branch de upload
