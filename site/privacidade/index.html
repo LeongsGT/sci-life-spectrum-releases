@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sci Life Spectrum · Política de Privacidade</title>
+<link rel="stylesheet" href="/style.css">
+
+</head>
+<body class="doc-page">
+<main class="doc">
+<p class="brand">SCI LIFE SPECTRUM</p>
+<h1>Política de Privacidade</h1>
+<p class="muted">Versão 1 · vigente desde 27/10/2026</p>
+
+<h2>1. Quem é o responsável</h2>
+<p>O Sci Life Spectrum é mantido por <b data-ctl="nome"></b><span data-ctl="doc"></span>, que atua como controlador dos dados das contas de usuário. Contato para assuntos de privacidade e para exercer seus direitos: <b data-ctl="email"></b>.</p>
+
+<h2>2. Onde seus dados ficam</h2>
+<ul>
+  <li><b>No seu computador</b> (banco de dados local do aplicativo): agenda, tarefas, plantões e valores, diário de hábitos, questões, respostas e estatísticas, anotações, pacientes e prontuários.</li>
+  <li><b>Na nuvem Sci Life</b> (provedor Supabase), somente quando você entra com uma conta: dados da conta (nome e e-mail), agenda e tarefas criadas no app, sessões de foco, diário de hábitos, biometria, respostas de questões do catálogo, chamados de suporte, plano e histórico de pagamento. Os servidores podem estar fora do Brasil; a transferência segue as salvaguardas da LGPD.</li>
+  <li><b>Prontuários e dados de pacientes não são enviados para a nuvem.</b> Ficam apenas no seu computador. Quando você registra dados de pacientes, você é o responsável (controlador) por eles perante a LGPD e as normas profissionais.</li>
+</ul>
+
+<h2>3. Serviços de terceiros, só quando você ativa</h2>
+<ul>
+  <li><b>Google Agenda</b>: importa e envia eventos da sua agenda, com sua autorização no Google. Você pode desconectar a qualquer momento no app.</li>
+  <li><b>Entrar com Google</b>: usamos nome, e-mail e foto do perfil para criar e identificar sua conta.</li>
+  <li><b>Córtex (IA)</b>: ao pedir uma análise, um resumo dos últimos 7 dias (sono, hábitos, plantões e desempenho) é enviado ao Google Gemini para gerar o texto. Nada é enviado sem a sua ação.</li>
+  <li><b>Relatórios de erro</b> (Sentry): desligados por padrão; só são enviados se você permitir, sem conteúdo de estudo ou de pacientes.</li>
+  <li><b>Pagamentos</b>: processados pelo provedor de pagamento; não recebemos nem guardamos dados completos do seu cartão.</li>
+</ul>
+
+<h2>4. Para que usamos</h2>
+<p>Para fazer o aplicativo funcionar (sincronizar entre aparelhos, mostrar estatísticas e agenda), dar suporte, cobrar planos pagos e manter a segurança. Não vendemos seus dados e não os usamos para publicidade. Bases legais: execução do contrato de uso, cumprimento de obrigação legal (registros fiscais) e consentimento nas funções opcionais.</p>
+
+<h2>5. Por quanto tempo</h2>
+<p>Enquanto sua conta existir. Ao excluir a conta, os dados na nuvem são apagados; o histórico de pagamentos pode ser mantido, sem vínculo com a conta, pelo prazo exigido pela legislação fiscal. Os dados no seu computador ficam sob seu controle e são apagados pelo próprio app na exclusão da conta.</p>
+
+<h2>6. Seus direitos</h2>
+<p>Você pode, a qualquer momento, no app em <b>Conta → Conta e privacidade</b>:</p>
+<ul>
+  <li>baixar uma cópia de todos os seus dados (portabilidade e acesso);</li>
+  <li>excluir sua conta e os dados associados;</li>
+  <li>desligar relatórios de erro e desconectar o Google Agenda.</li>
+</ul>
+<p>Para correção, informação sobre compartilhamento ou revogação de consentimento, escreva para <span data-ctl="email"></span>. Você também pode reclamar à ANPD (Autoridade Nacional de Proteção de Dados).</p>
+
+<h2>7. Segurança</h2>
+<p>Conexões criptografadas (HTTPS), controle de acesso por conta na nuvem (cada usuário só acessa os próprios dados) e credenciais guardadas de forma cifrada no computador. Nenhum sistema é 100% seguro; em caso de incidente relevante, avisaremos os titulares e a ANPD conforme a lei.</p>
+
+<h2>8. Mudanças</h2>
+<p>Se esta política mudar de forma relevante, avisaremos no aplicativo antes da mudança valer.</p>
+</main>
+<script>
+  // ===== Responsável pelos dados (controlador) — altere só aqui =====
+  // tipo: 'pessoa' (CPF não é exibido) ou 'empresa' (exibe razão social e CNPJ)
+  var CONTROLADOR = {
+    tipo: 'pessoa',
+    nome: 'Carlos Leonardo',
+    documento: '',            // CNPJ quando tipo = 'empresa', ex.: '00.000.000/0001-00'
+    email: 'carlslenard@gmail.com'
+  };
+  // =================================================================
+  document.querySelectorAll('[data-ctl="nome"]').forEach(function (el) { el.textContent = CONTROLADOR.nome; });
+  document.querySelectorAll('[data-ctl="doc"]').forEach(function (el) {
+    el.textContent = CONTROLADOR.tipo === 'empresa' && CONTROLADOR.documento ? ' (CNPJ ' + CONTROLADOR.documento + ')' : '';
+  });
+  document.querySelectorAll('[data-ctl="email"]').forEach(function (el) {
+    var a = document.createElement('a'); a.href = 'mailto:' + CONTROLADOR.email; a.textContent = CONTROLADOR.email; a.style.color = 'inherit';
+    el.appendChild(a);
+  });
+</script>
+</body>
+</html>

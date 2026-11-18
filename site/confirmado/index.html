@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Sci Life Spectrum · Confirmação de e-mail</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="card" id="card" aria-live="polite">
+  <p class="brand">SCI LIFE SPECTRUM</p>
+  <div class="icon" id="icon">⏳</div>
+  <h1 id="title">Verificando…</h1>
+  <p id="msg"></p>
+  <small>Pode fechar esta página.</small>
+</main>
+<script>
+(function () {
+  // O Supabase devolve o resultado no fragmento (#...) ou na query (?...).
+  var raw = (location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, '');
+  var p = new URLSearchParams(raw);
+  // Nunca guardamos nem usamos os tokens: a página só informa o resultado e limpa o endereço.
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  var card = document.getElementById('card');
+  var set = function (cls, icon, title, msg) {
+    card.className = 'card ' + cls;
+    document.getElementById('icon').textContent = icon;
+    document.getElementById('title').textContent = title;
+    document.getElementById('msg').textContent = msg;
+  };
+  var errorCode = p.get('error_code') || p.get('error');
+  var type = p.get('type');
+  if (errorCode) {
+    if (/expired|otp/.test(errorCode)) {
+      set('err', '⌛', 'Este link expirou', 'Os links de confirmação valem por pouco tempo e só podem ser usados uma vez. Se você já tinha confirmado, é só entrar no app. Se não, crie a conta de novo no app para receber um novo e-mail.');
+    } else {
+      set('err', '⚠️', 'Não foi possível confirmar', (p.get('error_description') || 'O link é inválido ou já foi usado.').replace(/\+/g, ' '));
+    }
+  } else if (type === 'recovery') {
+    set('ok', '🔑', 'Link de redefinição aberto', 'Volte ao Sci Life Spectrum no computador para definir a nova senha.');
+  } else if (type === 'email_change') {
+    set('ok', '✅', 'E-mail atualizado', 'Seu novo e-mail foi confirmado. Volte ao Sci Life Spectrum.');
+  } else {
+    set('ok', '✅', 'E-mail confirmado!', 'Sua conta Sci Life está ativa. Volte ao aplicativo no computador e entre com seu e-mail e senha.');
+  }
+})();
+</script>
+</body>
+</html>
