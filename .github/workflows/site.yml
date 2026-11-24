@@ -1,5 +1,10 @@
 # Leva o site (pasta site/, enviada por scripts/site-github.mjs do projeto) ao GitHub Pages,
 # servido em scispectrum.dpdns.org. Só roda quando site/ muda.
+#
+# Dois jobs de propósito (24/11/2026): com o envio e a publicação no MESMO job, o deploy-pages
+# consultava o artefato no segundo seguinte ao upload e recebia "No artifacts named github-pages
+# were found" — o metadado do artefato ainda não existia. A fronteira entre jobs resolve, e é o
+# formato que a própria documentação do GitHub Pages usa.
 name: Publicar site
 
 on:
@@ -18,16 +23,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  montar:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.publicar.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+
+  deploy:
+    needs: montar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
       - id: publicar
         uses: actions/deploy-pages@v4
