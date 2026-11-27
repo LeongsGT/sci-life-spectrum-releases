@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:; connect-src https://ewpyjspeofmwwnugshju.supabase.co https://api.pwnedpasswords.com; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
@@ -16,14 +16,32 @@
   <div class="icon" id="icon">⏳</div>
   <h1 id="title">Verificando…</h1>
   <p id="msg"></p>
-  <small>Pode fechar esta página.</small>
+  <form id="nova-senha" class="senha" hidden novalidate>
+    <label for="senha1">Nova senha</label>
+    <input id="senha1" type="password" autocomplete="new-password" minlength="8" required>
+    <label for="senha2">Repita a nova senha</label>
+    <input id="senha2" type="password" autocomplete="new-password" minlength="8" required>
+    <p id="erro-senha" class="erro" role="alert"></p>
+    <button id="salvar" type="submit" class="cta">Salvar a nova senha</button>
+  </form>
+  <small id="rodape">Pode fechar esta página.</small>
 </main>
 <script>
 (function () {
+  // A nuvem do app (o endereço e a chave publicável são públicos: estão dentro do próprio app).
+  var NUVEM = 'https://ewpyjspeofmwwnugshju.supabase.co';
+  var CHAVE = 'sb_publishable_yQb-ze7vpqZUDLiEecwTkQ_Tj3izQKU';
+  // O mesmo mínimo do app (shared/auth/senhaVazada.ts, MINIMO_DE_CARACTERES).
+  var MINIMO = 8;
+
   // O Supabase devolve o resultado no fragmento (#...) ou na query (?...).
   var raw = (location.hash || '').replace(/^#/, '') + '&' + (location.search || '').replace(/^\?/, '');
   var p = new URLSearchParams(raw);
-  // Nunca guardamos nem usamos os tokens: a página só informa o resultado e limpa o endereço.
+  // Nada é guardado (nem no navegador): a chave do link de troca de senha fica só na memória desta
+  // página, para gravar a senha nova, e o endereço é limpo na hora.
+  // Só aceita a chave no formato que a nuvem manda (três partes); link cortado no meio, por exemplo ao
+  // copiar do e-mail, mostrava o formulário e só falhava no fim, depois de digitar a senha duas vezes.
+  var chaveDoLink = /^[\w-]+\.[\w-]+\.[\w-]+$/.test(p.get('access_token') || '') ? p.get('access_token') : '';
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   var card = document.getElementById('card');
   var set = function (cls, icon, title, msg) {
@@ -36,16 +54,96 @@
   var type = p.get('type');
   if (errorCode) {
     if (/expired|otp/.test(errorCode)) {
-      set('err', '⌛', 'Este link expirou', 'Os links de confirmação valem por pouco tempo e só podem ser usados uma vez. Se você já tinha confirmado, é só entrar no app. Se não, crie a conta de novo no app para receber um novo e-mail.');
+      set('err', '⌛', 'Este link expirou', 'Os links valem por pouco tempo e só podem ser usados uma vez. Confirmação de conta: se você já tinha confirmado, é só entrar no app; se não, crie a conta de novo. Troca de senha: no app, toque em "Esqueci minha senha" para receber outro link.');
     } else {
       set('err', '⚠️', 'Não foi possível confirmar', (p.get('error_description') || 'O link é inválido ou já foi usado.').replace(/\+/g, ' '));
     }
+  } else if (type === 'recovery' && chaveDoLink) {
+    document.title = 'Sci Life Spectrum · Nova senha';
+    set('ok', '🔑', 'Crie a sua nova senha', 'Com pelo menos ' + MINIMO + ' caracteres. Depois, entre no app com ela.');
+    abrirFormulario();
   } else if (type === 'recovery') {
-    set('ok', '🔑', 'Link de redefinição aberto', 'Volte ao Sci Life Spectrum no computador para definir a nova senha.');
+    set('err', '⚠️', 'Link incompleto', 'Este link de troca de senha chegou sem a autorização. No app, toque em "Esqueci minha senha" para receber outro.');
   } else if (type === 'email_change') {
     set('ok', '✅', 'E-mail atualizado', 'Seu novo e-mail foi confirmado. Volte ao Sci Life Spectrum.');
   } else {
     set('ok', '✅', 'E-mail confirmado!', 'Sua conta Sci Life está ativa. Volte ao aplicativo no computador e entre com seu e-mail e senha.');
+  }
+
+  function abrirFormulario() {
+    var form = document.getElementById('nova-senha');
+    var erro = document.getElementById('erro-senha');
+    var botao = document.getElementById('salvar');
+    form.hidden = false;
+    document.getElementById('rodape').textContent = 'A senha não fica nesta página: vai direto para a sua conta.';
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var a = document.getElementById('senha1').value;
+      var b = document.getElementById('senha2').value;
+      erro.textContent = '';
+      if (a.length < MINIMO) { erro.textContent = 'A senha precisa de pelo menos ' + MINIMO + ' caracteres.'; return; }
+      if (a !== b) { erro.textContent = 'As duas senhas não são iguais.'; return; }
+      botao.disabled = true;
+      botao.textContent = 'Salvando…';
+      senhaVazada(a).then(function (vezes) {
+        if (vezes > 0) {
+          erro.textContent = 'Esta senha já apareceu ' + (vezes === 1 ? 'uma vez' : vezes.toLocaleString('pt-BR') + ' vezes') + ' em vazamentos de outros sites, então está nas listas que os invasores testam primeiro. Escolha outra.';
+          return null;
+        }
+        return fetch(NUVEM + '/auth/v1/user', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json', apikey: CHAVE, authorization: 'Bearer ' + chaveDoLink },
+          body: JSON.stringify({ password: a })
+        }).then(function (r) {
+          if (r.ok) {
+            chaveDoLink = '';
+            form.hidden = true;
+            set('ok', '✅', 'Senha trocada!', 'Volte ao Sci Life Spectrum e entre com o seu e-mail e a senha nova.');
+            document.getElementById('rodape').textContent = 'Pode fechar esta página.';
+            return null;
+          }
+          return r.json().catch(function () { return {}; }).then(function (j) {
+            erro.textContent = recadoDoErro(r.status, j);
+          });
+        });
+      }).catch(function () {
+        erro.textContent = 'Sem conexão com a nuvem. Confira a internet e toque de novo em Salvar.';
+      }).then(function () {
+        botao.disabled = false;
+        botao.textContent = 'Salvar a nova senha';
+      });
+    });
+  }
+
+  function recadoDoErro(status, j) {
+    var codigo = String((j && (j.error_code || j.code)) || '');
+    if (codigo === 'same_password') return 'A nova senha precisa ser diferente da anterior.';
+    if (codigo === 'weak_password') return 'A nuvem recusou a senha por ser fraca. Use uma mais longa, misturando letras, números e símbolos.';
+    if (status === 401 || status === 403 || /expired|jwt|session/i.test(codigo)) return 'Este link já venceu. No app, toque em "Esqueci minha senha" para receber outro.';
+    if (status === 429) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
+    return 'A nuvem não aceitou a troca agora. Tente de novo em instantes.';
+  }
+
+  // Have I Been Pwned por k-anonimato: só os 5 primeiros caracteres do SHA-1 saem daqui, e a
+  // comparação acontece nesta página (o mesmo do app: src/modules/auth/checarSenha.ts). Se o
+  // serviço não responder, a troca segue.
+  function senhaVazada(senha) {
+    try {
+      return crypto.subtle.digest('SHA-1', new TextEncoder().encode(senha)).then(function (buf) {
+        var hex = Array.prototype.map.call(new Uint8Array(buf), function (x) { return ('0' + x.toString(16)).slice(-2); }).join('').toUpperCase();
+        return fetch('https://api.pwnedpasswords.com/range/' + hex.slice(0, 5), { headers: { 'Add-Padding': 'true' } })
+          .then(function (r) { return r.ok ? r.text() : ''; })
+          .then(function (texto) {
+            var fim = hex.slice(5);
+            var linhas = texto.split(/\r?\n/);
+            for (var i = 0; i < linhas.length; i++) {
+              var partes = linhas[i].split(':');
+              if (partes[0].trim().toUpperCase() === fim) return parseInt(partes[1], 10) || 0;
+            }
+            return 0;
+          });
+      }).catch(function () { return 0; });
+    } catch (e) { return Promise.resolve(0); }
   }
 })();
 </script>
